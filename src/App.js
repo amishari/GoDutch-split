@@ -1,6 +1,27 @@
 import { useState } from 'react';
 import './styles.css';
 
+const initialFriends = [
+	{
+		id: 118836,
+		name: 'Clark',
+		image: 'https://i.pravatar.cc/48?u=118836',
+		balance: -7
+	},
+	{
+		id: 933372,
+		name: 'Sarah',
+		image: 'https://i.pravatar.cc/48?u=933372',
+		balance: 20
+	},
+	{
+		id: 499476,
+		name: 'Anthony',
+		image: 'https://i.pravatar.cc/48?u=499476',
+		balance: 0
+	}
+];
+
 function Button({ children, onClick }) {
 	return (
 		<button className="button" onClick={onClick}>
@@ -8,38 +29,25 @@ function Button({ children, onClick }) {
 		</button>
 	);
 }
+
 export default function App() {
-	const initialFriends = [
-		{
-			id: 118836,
-			name: 'Clark',
-			image: 'https://i.pravatar.cc/48?u=118836',
-			balance: -7
-		},
-		{
-			id: 933372,
-			name: 'Sarah',
-			image: 'https://i.pravatar.cc/48?u=933372',
-			balance: 20
-		},
-		{
-			id: 499476,
-			name: 'Anthony',
-			image: 'https://i.pravatar.cc/48?u=499476',
-			balance: 0
-		}
-	];
+	const [friends, setFriends] = useState(initialFriends);
 	const [showAddFriend, setShowAddFriend] = useState(false);
-	function addFriendHandler() {
+
+	function handleShowFriendHandler() {
 		setShowAddFriend((show) => !show);
+	}
+	function handleAddFriend(friend) {
+		setFriends((friends) => [...friends, friend]);
+		setShowAddFriend(false);
 	}
 
 	return (
 		<div className="App">
 			<div className="sidebar">
-				<FriendList friends={initialFriends} />
-				{showAddFriend && <FormAddFriend />}
-				<Button onClick={addFriendHandler}>
+				<FriendList friends={friends} />
+				{showAddFriend && <FormAddFriend onAddFriend={handleAddFriend} />}
+				<Button onClick={handleShowFriendHandler}>
 					{showAddFriend ? 'Close' : 'Add Friend'}
 				</Button>
 				<FormSplit />
@@ -78,20 +86,20 @@ function Friend({ friend }) {
 	);
 }
 
-function FormAddFriend() {
+function FormAddFriend({ onAddFriend }) {
 	const [name, setName] = useState('');
 	const [img, setImg] = useState('https://i.pravatar.cc/48');
 	function handleSubmit(e) {
 		e.preventDefault();
 		if (!name || !img) return;
-		const id = crypto.randomUUID();
+		const id = crypto.randomUUID(); //only in browser works
 		const newFriend = {
 			name,
-			img: `${img}=${id}`,
+			img: `${img}?u=${id}`, // that's for unique image
 			balance: 0,
-			id: crypto.randomUUID()
+			id
 		};
-		console.log(newFriend);
+		onAddFriend(newFriend);
 		setName('');
 		setImg('https://i.pravatar.cc/48');
 	}
@@ -111,7 +119,7 @@ function FormAddFriend() {
 				placeholder="type img url"
 				onChange={(e) => setImg(e.target.value)}
 			/>
-			<Button>Add </Button>
+			<Button onSubmit={handleSubmit}>Add </Button>
 		</form>
 	);
 }
