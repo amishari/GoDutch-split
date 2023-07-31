@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import './styles.css';
-
 const initialFriends = [
 	{
 		id: 118836,
@@ -29,10 +28,10 @@ function Button({ children, onClick }) {
 		</button>
 	);
 }
-
 export default function App() {
 	const [friends, setFriends] = useState(initialFriends);
 	const [showAddFriend, setShowAddFriend] = useState(false);
+	const [selected, setSelected] = useState(null);
 
 	function handleShowFriendHandler() {
 		setShowAddFriend((show) => !show);
@@ -41,32 +40,45 @@ export default function App() {
 		setFriends((friends) => [...friends, friend]);
 		setShowAddFriend(false);
 	}
+	function handleSelect(friend) {
+		setSelected((cur) => (cur?.id === friend?.id ? null : friend));
+		setShowAddFriend(false);
+	}
 
 	return (
 		<div className="App">
 			<div className="sidebar">
-				<FriendList friends={friends} />
+				<FriendList
+					friends={friends}
+					onSelect={handleSelect}
+					selected={selected}
+				/>
 				{showAddFriend && <FormAddFriend onAddFriend={handleAddFriend} />}
 				<Button onClick={handleShowFriendHandler}>
 					{showAddFriend ? 'Close' : 'Add Friend'}
 				</Button>
-				<FormSplit />
+				{selected && <FormSplit onSelect={selected} />}
 			</div>
 		</div>
 	);
 }
-function FriendList({ friends }) {
+function FriendList({ friends, onSelect, selected }) {
 	return (
 		<ul>
 			{friends.map((item) => (
-				<Friend key={item.friend} friend={item} />
+				<Friend
+					key={item.friend}
+					friend={item}
+					onSelect={onSelect}
+					selected={selected}
+				/>
 			))}
 		</ul>
 	);
 }
-function Friend({ friend }) {
+function Friend({ friend, onSelect, selected }) {
 	return (
-		<li>
+		<li className={friend?.id === selected?.id ? 'selected' : ''}>
 			<img src={friend.image} alt="avatar" />
 			<h3>{friend.name}</h3>
 			{friend.balance < 0 && (
@@ -81,7 +93,9 @@ function Friend({ friend }) {
 				</p>
 			)}
 			{friend.balance === 0 && <p>You and {friend.name} are balanced!</p>}
-			<Button>Select</Button>
+			<Button onClick={() => onSelect(friend)}>
+				{selected?.id === friend?.id ? 'Close' : 'Select'}
+			</Button>
 		</li>
 	);
 }
@@ -123,20 +137,38 @@ function FormAddFriend({ onAddFriend }) {
 		</form>
 	);
 }
-function FormSplit() {
+function FormSplit({ onSelect }) {
+	const [bill, setBill] = useState('');
+	const [paidByUser, setPaidByUser] = useState('');
+	const paidByFriend = bill ? bill - paidByUser : ' ';
+	const [whoIspaying, setWhoIsPaying] = useState('user');
 	return (
 		<form className="form-split-bill">
-			<h2>Split a bill with x</h2>
+			<h2>Split a bill with {onSelect.name}</h2>
 			<label>Bill value</label>
-			<input type="text" />
+			<input
+				type="text"
+				value={bill}
+				onChange={(e) => setBill(Number(e.target.value))}
+			/>
 			<label>Your expense</label>
-			<input type="text" />
-			<label>X expense</label>
-			<input type="text" />
+			<input
+				type="text"
+				value={paidByUser}
+				onChange={(e) =>
+					setPaidByUser(
+						Number(e.target.value) > bill ? paidByUser : Number(e.target.value)
+					)
+				}
+			/>
+			<label>{onSelect.name}'s expense</label>
+			<input value={paidByFriend} type="text" disabled />
 			<label>Who's paying?</label>
-			<select>
-				<option>you</option>
-				<option>Your friend</option>
+			<select
+				value={whoIspaying}
+				onChange={(e) => setWhoIsPaying(e.target.value)}>
+				<option value="user">you</option>
+				<option value="friend">{onSelect.name}</option>
 			</select>
 			<Button>Split Bill</Button>
 		</form>
